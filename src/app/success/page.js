@@ -10,7 +10,7 @@ export default function SuccessPage() {
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(countdownInterval)
-          window.location.href = 'https://google.com'
+          window.location.href = 'https://www.cdhpm.com/'
           return 0
         }
         return prev - 1
