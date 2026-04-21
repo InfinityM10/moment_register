@@ -1,29 +1,7 @@
 'use server'
 
 import { databases } from '@/lib/appwrite'
-import { ID, Query } from 'appwrite'
-
-// Check if a person already has a record of the given moment type today
-async function hasTodayRecord(name, momentType) {
-  const startOfDay = new Date()
-  startOfDay.setHours(0, 0, 0, 0)
-
-  const endOfDay = new Date()
-  endOfDay.setHours(23, 59, 59, 999)
-
-  const result = await databases.listDocuments(
-    process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID,
-    process.env.NEXT_PUBLIC_APPWRITE_COLLECTION_ID,
-    [
-      Query.equal('Name', name.substring(0, 64)),
-      Query.equal('moment', momentType),
-      Query.greaterThanEqual('$createdAt', startOfDay.toISOString()),
-      Query.lessThanEqual('$createdAt', endOfDay.toISOString()),
-    ]
-  )
-
-  return result.total > 0
-}
+import { ID } from 'appwrite'
 
 // Calculate distance between two coordinates in meters using Haversine formula
 function calculateDistance(lat1, lon1, lat2, lon2) {
@@ -74,15 +52,6 @@ export async function PuchIn(fingerPrint, Location, userData) {
   )
 
   try {
-    // Check for duplicate punch in today
-    const alreadyPunchedIn = await hasTodayRecord(name, 'in')
-    if (alreadyPunchedIn) {
-      return {
-        success: false,
-        error: 'You have already punched in today. Please punch out first.'
-      }
-    }
-
     const response = await databases.createDocument(
       process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID,
       process.env.NEXT_PUBLIC_APPWRITE_COLLECTION_ID,
@@ -138,15 +107,6 @@ export async function PunchOut(fingerPrint, Location, userData) {
   )
 
   try {
-    // Check for duplicate punch out today
-    const alreadyPunchedOut = await hasTodayRecord(name, 'out')
-    if (alreadyPunchedOut) {
-      return {
-        success: false,
-        error: 'You have already punched out today.'
-      }
-    }
-
     const response = await databases.createDocument(
       process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID,
       process.env.NEXT_PUBLIC_APPWRITE_COLLECTION_ID,
