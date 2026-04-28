@@ -370,7 +370,7 @@ export default function LogsPage() {
                 {/* Header */}
                 <div className="mb-6 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <h1 className="text-3xl font-bold text-gray-900">Moment Logs</h1>
+                        <h1 className="text-3xl font-bold text-gray-900">Movement Logs</h1>
                         <div className="flex items-center gap-2 rounded-full bg-green-100 px-3 py-1">
                             <span className="relative flex h-2 w-2">
                                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
