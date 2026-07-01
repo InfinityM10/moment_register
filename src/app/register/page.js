@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { account } from '@/lib/appwrite';
 
 function RegisterForm() {
     const router = useRouter();
@@ -50,30 +51,49 @@ function RegisterForm() {
         }));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // Save to localStorage
-        const dataToSave = {
-            name: formData.name,
-            designation: formData.designation,
-            department: formData.department,
-            registeredAt: new Date().toISOString()
-        };
+        try {
+            // Attempt to save to Appwrite preferences if user is authenticated
+            try {
+                const user = await account.get();
+                if (user.name !== formData.name) {
+                    await account.updateName(formData.name);
+                }
+                await account.updatePrefs({
+                    designation: formData.designation,
+                    department: formData.department
+                });
+            } catch (appwriteError) {
+                console.warn('Registration: Appwrite update skipped (user may not be logged in):', appwriteError.message);
+            }
 
-        localStorage.setItem('userData', JSON.stringify(dataToSave));
-        setIsRegistered(true);
+            // Save to localStorage
+            const dataToSave = {
+                name: formData.name,
+                designation: formData.designation,
+                department: formData.department,
+                registeredAt: new Date().toISOString()
+            };
 
-        console.log('Form submitted and saved:', formData);
-        
+            localStorage.setItem('userData', JSON.stringify(dataToSave));
+            setIsRegistered(true);
 
-        // Redirect to the original page if redirect parameter exists, otherwise go home
-        if (redirectUrl) {
-            router.push(redirectUrl);
-        } else {
-            router.push('/');
+            console.log('Form submitted and saved:', formData);
+
+            // Redirect to the original page if redirect parameter exists, otherwise go home
+            if (redirectUrl) {
+                router.push(redirectUrl);
+            } else {
+                router.push('/');
+            }
+        } catch (error) {
+            console.error('Registration save failed:', error);
+            alert('Failed to save details: ' + error.message);
         }
     };
+
 
     if (loading) {
         return (

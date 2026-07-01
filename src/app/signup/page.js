@@ -75,6 +75,12 @@ export default function SignupPage() {
                 formData.password
             );
 
+            // Store user data in Appwrite preferences
+            await account.updatePrefs({
+                designation: formData.designation,
+                department: formData.department
+            });
+
             // Store user data in localStorage
             const user = await account.get();
             const userData = {
