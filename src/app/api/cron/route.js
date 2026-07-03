@@ -22,18 +22,18 @@ function getDeterministicRandom(seedStr, min, max) {
 // Calculates deterministic times for a specific date in YYYY-MM-DD format
 export function getScheduleForDate(dateStr) {
   // Manohar
-  const manoharLunchOutMin = getDeterministicRandom(`manohar-lunch-out-${dateStr}`, 20, 45); // 12:20 - 12:45
-  const manoharLunchInMin = getDeterministicRandom(`manohar-lunch-in-${dateStr}`, 30, 59);   // 1:30 - 1:59
+  const manoharLunchOutMin = getDeterministicRandom(`manohar-lunch-out-${dateStr}`, 40, 50); // 12:40 - 12:50
+  const manoharLunchInMin = getDeterministicRandom(`manohar-lunch-in-${dateStr}`, 30, 45);   // 1:30 - 1:45
   const manoharEodMin = getDeterministicRandom(`manohar-eod-${dateStr}`, 0, 10);             // 5:00 - 5:10
 
   // Shrinivas (Ensure at least 1-minute separation from Manohar)
-  let shrinivasLunchOutMin = getDeterministicRandom(`shrinivas-lunch-out-${dateStr}`, 20, 45);
+  let shrinivasLunchOutMin = getDeterministicRandom(`shrinivas-lunch-out-${dateStr}`, 40, 50);
   if (shrinivasLunchOutMin === manoharLunchOutMin) {
-    shrinivasLunchOutMin = shrinivasLunchOutMin >= 45 ? shrinivasLunchOutMin - 1 : shrinivasLunchOutMin + 1;
+    shrinivasLunchOutMin = shrinivasLunchOutMin >= 50 ? shrinivasLunchOutMin - 1 : shrinivasLunchOutMin + 1;
   }
-  let shrinivasLunchInMin = getDeterministicRandom(`shrinivas-lunch-in-${dateStr}`, 30, 59);
+  let shrinivasLunchInMin = getDeterministicRandom(`shrinivas-lunch-in-${dateStr}`, 30, 45);
   if (shrinivasLunchInMin === manoharLunchInMin) {
-    shrinivasLunchInMin = shrinivasLunchInMin >= 59 ? shrinivasLunchInMin - 1 : shrinivasLunchInMin + 1;
+    shrinivasLunchInMin = shrinivasLunchInMin >= 45 ? shrinivasLunchInMin - 1 : shrinivasLunchInMin + 1;
   }
   let shrinivasEodMin = getDeterministicRandom(`shrinivas-eod-${dateStr}`, 0, 10);
   if (shrinivasEodMin === manoharEodMin) {
