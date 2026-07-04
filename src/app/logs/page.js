@@ -668,7 +668,7 @@ export default function LogsPage() {
                                                                                 <span className="text-xs">{"<--"}</span>
                                                                                 <span className="text-xs font-medium">
                                                                                     {item.duration > 59
-                                                                                        ? `${Math.round(item.duration / 60)}h`
+                                                                                        ? `${Math.floor(item.duration / 60)}h${item.duration % 60 > 0 ? ` ${item.duration % 60}m` : ''}`
                                                                                         : `${item.duration}m`}
                                                                                 </span>
                                                                                 <span className="text-xs">{"-->"}</span>
