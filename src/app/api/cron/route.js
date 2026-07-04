@@ -21,42 +21,33 @@ function getDeterministicRandom(seedStr, min, max) {
 
 // Calculates deterministic times for a specific date in YYYY-MM-DD format
 export function getScheduleForDate(dateStr) {
-  // Generate 3 unique random minutes between 5 and 15 for EOD (5:05 PM - 5:15 PM)
-  let eod1 = getDeterministicRandom(`eod-1-${dateStr}`, 5, 15);
-  let eod2 = getDeterministicRandom(`eod-2-${dateStr}`, 5, 15);
-  let eod3 = getDeterministicRandom(`eod-3-${dateStr}`, 5, 15);
+  // Manohar & Shrinivas Lunch Out (12:40 PM - 12:50 PM)
+  const lunchOutStart = getDeterministicRandom(`lunch-out-start-${dateStr}`, 40, 44);
+  const lunchOutGap = getDeterministicRandom(`lunch-out-gap-${dateStr}`, 2, 5); // 2 to 5 mins gap
+  const isManoharFirstLunchOut = getDeterministicRandom(`lunch-out-order-${dateStr}`, 0, 1) === 0;
+  const manoharLunchOutMin = isManoharFirstLunchOut ? lunchOutStart : lunchOutStart + lunchOutGap;
+  const shrinivasLunchOutMin = isManoharFirstLunchOut ? lunchOutStart + lunchOutGap : lunchOutStart;
 
-  // Ensure they are unique
-  let attempts = 0;
-  while ((eod1 === eod2 || eod1 === eod3 || eod2 === eod3) && attempts < 50) {
-    if (eod1 === eod2) eod2 = ((eod2 - 5 + 1) % 11) + 5;
-    if (eod1 === eod3 || eod2 === eod3) eod3 = ((eod3 - 5 + 2) % 11) + 5;
-    attempts++;
-  }
+  // Manohar & Shrinivas Lunch In (1:30 PM - 1:45 PM)
+  const lunchInStart = getDeterministicRandom(`lunch-in-start-${dateStr}`, 30, 38);
+  const lunchInGap = getDeterministicRandom(`lunch-in-gap-${dateStr}`, 2, 6); // 2 to 6 mins gap
+  const isManoharFirstLunchIn = getDeterministicRandom(`lunch-in-order-${dateStr}`, 0, 1) === 0;
+  const manoharLunchInMin = isManoharFirstLunchIn ? lunchInStart : lunchInStart + lunchInGap;
+  const shrinivasLunchInMin = isManoharFirstLunchIn ? lunchInStart + lunchInGap : lunchInStart;
 
-  // Sort EOD minutes so Aarsha is first, Shrinivas is second, and Manohar is third
-  const sortedEodMins = [eod1, eod2, eod3].sort((a, b) => a - b);
-  const aarshaEodMin = sortedEodMins[0];
-  const shrinivasEodMin = sortedEodMins[1];
-  const manoharEodMin = sortedEodMins[2];
+  // Aarsha Lunch Out (12:00 PM - 12:30 PM)
+  const aarshaLunchOutMin = getDeterministicRandom(`aarsha-lunch-out-${dateStr}`, 0, 30);
+  
+  // Aarsha Lunch In (2:00 PM - 2:30 PM)
+  const aarshaLunchInMin = getDeterministicRandom(`aarsha-lunch-in-${dateStr}`, 0, 30);
 
-  // Manohar Lunch (12:40 PM - 12:50 PM & 1:30 PM - 1:45 PM)
-  const manoharLunchOutMin = getDeterministicRandom(`manohar-lunch-out-${dateStr}`, 40, 50);
-  const manoharLunchInMin = getDeterministicRandom(`manohar-lunch-in-${dateStr}`, 30, 45);
-
-  // Shrinivas Lunch (Ensure at least 1-minute separation from Manohar)
-  let shrinivasLunchOutMin = getDeterministicRandom(`shrinivas-lunch-out-${dateStr}`, 40, 50);
-  if (shrinivasLunchOutMin === manoharLunchOutMin) {
-    shrinivasLunchOutMin = shrinivasLunchOutMin >= 50 ? shrinivasLunchOutMin - 1 : shrinivasLunchOutMin + 1;
-  }
-  let shrinivasLunchInMin = getDeterministicRandom(`shrinivas-lunch-in-${dateStr}`, 30, 45);
-  if (shrinivasLunchInMin === manoharLunchInMin) {
-    shrinivasLunchInMin = shrinivasLunchInMin >= 45 ? shrinivasLunchInMin - 1 : shrinivasLunchInMin + 1;
-  }
-
-  // Aarsha
-  const aarshaLunchOutMin = getDeterministicRandom(`aarsha-lunch-out-${dateStr}`, 0, 30);    // 12:00 - 12:30
-  const aarshaLunchInMin = getDeterministicRandom(`aarsha-lunch-in-${dateStr}`, 0, 59);      // 2:00 - 2:59
+  // EOD Punch Out (5:05 PM - 5:15 PM)
+  // Aarsha first, then Shrinivas, then Manohar
+  const aarshaEodMin = getDeterministicRandom(`aarsha-eod-${dateStr}`, 5, 7);
+  const gap1 = getDeterministicRandom(`eod-gap1-${dateStr}`, 2, 4); // 2 to 4 mins gap
+  const shrinivasEodMin = aarshaEodMin + gap1;
+  const gap2 = getDeterministicRandom(`eod-gap2-${dateStr}`, 2, 4); // 2 to 4 mins gap
+  const manoharEodMin = shrinivasEodMin + gap2;
 
   return {
     manohar: {
