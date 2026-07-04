@@ -24,9 +24,10 @@ export function getScheduleForDate(dateStr) {
   // Manohar
   const manoharLunchOutMin = getDeterministicRandom(`manohar-lunch-out-${dateStr}`, 40, 50); // 12:40 - 12:50
   const manoharLunchInMin = getDeterministicRandom(`manohar-lunch-in-${dateStr}`, 30, 45);   // 1:30 - 1:45
-  const manoharEodMin = getDeterministicRandom(`manohar-eod-${dateStr}`, 0, 2);              // 5:00 - 5:02
+  // Manohar EOD (5:05 PM - 5:07 PM)
+  const manoharEodMin = getDeterministicRandom(`manohar-eod-${dateStr}`, 5, 7);
 
-  // Shrinivas (Ensure at least 1-minute separation from Manohar)
+  // Shrinivas EOD (5:00 PM - 5:02 PM) (Ensure at least 1-minute separation from Manohar for lunch)
   let shrinivasLunchOutMin = getDeterministicRandom(`shrinivas-lunch-out-${dateStr}`, 40, 50);
   if (shrinivasLunchOutMin === manoharLunchOutMin) {
     shrinivasLunchOutMin = shrinivasLunchOutMin >= 50 ? shrinivasLunchOutMin - 1 : shrinivasLunchOutMin + 1;
@@ -35,12 +36,12 @@ export function getScheduleForDate(dateStr) {
   if (shrinivasLunchInMin === manoharLunchInMin) {
     shrinivasLunchInMin = shrinivasLunchInMin >= 45 ? shrinivasLunchInMin - 1 : shrinivasLunchInMin + 1;
   }
-  const shrinivasEodMin = getDeterministicRandom(`shrinivas-eod-${dateStr}`, 5, 7);          // 5:05 - 5:07
+  const shrinivasEodMin = getDeterministicRandom(`shrinivas-eod-${dateStr}`, 0, 2);
 
-  // Aarsha
+  // Aarsha EOD (4:55 PM - 4:57 PM)
   const aarshaLunchOutMin = getDeterministicRandom(`aarsha-lunch-out-${dateStr}`, 0, 30);    // 12:00 - 12:30
   const aarshaLunchInMin = getDeterministicRandom(`aarsha-lunch-in-${dateStr}`, 0, 59);      // 2:00 - 2:59
-  const aarshaEodMin = getDeterministicRandom(`aarsha-eod-${dateStr}`, 10, 12);              // 5:10 - 5:12
+  const aarshaEodMin = getDeterministicRandom(`aarsha-eod-${dateStr}`, 55, 57);
 
   return {
     manohar: {
@@ -56,7 +57,7 @@ export function getScheduleForDate(dateStr) {
     aarsha: {
       lunchOut: { hour: 12, minute: aarshaLunchOutMin },
       lunchIn: { hour: 14, minute: aarshaLunchInMin },
-      eod: { hour: 17, minute: aarshaEodMin }
+      eod: { hour: 16, minute: aarshaEodMin }
     }
   };
 }
