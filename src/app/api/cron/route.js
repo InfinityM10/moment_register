@@ -175,27 +175,41 @@ export async function GET(request) {
 
       const morningIn = logs[0];
 
-      // Logic to find next scheduled punch:
-      // Index 0: Morning In (already exists)
-      // Index 1: Lunch Out (Auto)
-      // Index 2: Lunch In (Auto)
-      // Index 3: EOD Out (Auto)
-      
+      // Determine which scheduled auto-punches have already been created today.
+      // We track this by checking whether a punch exists AFTER the scheduled time,
+      // not by counting total punches. This way, manual mid-day punches don't
+      // break the auto-punch sequence.
+      const lunchOutScheduledMs = new Date(`${dateStr}T${String(schedule.lunchOut.hour).padStart(2,'0')}:${String(schedule.lunchOut.minute).padStart(2,'0')}:00+05:30`).getTime();
+      const lunchInScheduledMs  = new Date(`${dateStr}T${String(schedule.lunchIn.hour).padStart(2,'0')}:${String(schedule.lunchIn.minute).padStart(2,'0')}:00+05:30`).getTime();
+      const eodScheduledMs      = new Date(`${dateStr}T${String(schedule.eod.hour).padStart(2,'0')}:${String(schedule.eod.minute).padStart(2,'0')}:00+05:30`).getTime();
+
+      // A scheduled punch is considered "done" if there is already a punch of that
+      // type recorded at or after its scheduled time window (within the same day).
+      const lunchOutDone = logs.some(l => l.moment === 'out' && new Date(l.$createdAt).getTime() >= lunchOutScheduledMs - 30 * 60 * 1000);
+      const lunchInDone  = logs.some(l => l.moment === 'in'  && new Date(l.$createdAt).getTime() >= lunchInScheduledMs  - 30 * 60 * 1000);
+      const eodDone      = logs.some(l => l.moment === 'out' && new Date(l.$createdAt).getTime() >= eodScheduledMs      - 30 * 60 * 1000);
+
+      // Last recorded punch tells us whether the user is currently in or out
+      const lastPunch = logs[logs.length - 1];
+
       let nextAction = null;
       let nextMomentType = '';
 
-      if (logs.length === 1) {
-        if (isTimePassed(schedule.lunchOut, currentHour, currentMin)) {
+      if (!lunchOutDone && isTimePassed(schedule.lunchOut, currentHour, currentMin)) {
+        // Only punch out if the user is currently punched IN
+        if (lastPunch.moment === 'in') {
           nextAction = schedule.lunchOut;
           nextMomentType = 'out';
         }
-      } else if (logs.length === 2) {
-        if (isTimePassed(schedule.lunchIn, currentHour, currentMin)) {
+      } else if (lunchOutDone && !lunchInDone && isTimePassed(schedule.lunchIn, currentHour, currentMin)) {
+        // Only punch in if the user is currently punched OUT
+        if (lastPunch.moment === 'out') {
           nextAction = schedule.lunchIn;
           nextMomentType = 'in';
         }
-      } else if (logs.length === 3) {
-        if (isTimePassed(schedule.eod, currentHour, currentMin)) {
+      } else if (lunchInDone && !eodDone && isTimePassed(schedule.eod, currentHour, currentMin)) {
+        // Only punch out if the user is currently punched IN
+        if (lastPunch.moment === 'in') {
           nextAction = schedule.eod;
           nextMomentType = 'out';
         }
