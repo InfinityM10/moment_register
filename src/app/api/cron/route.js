@@ -42,7 +42,7 @@ export function getScheduleForDate(dateStr) {
   const aarshaLunchInMin = getDeterministicRandom(`aarsha-lunch-in-${dateStr}`, 0, 30);
 
   // EOD Punch Out (5:00 PM - 5:05 PM)
-  // Aarsha first, then Shrinivas, then Manohar
+  // Aarsha is always 1st; Shrinivas & Manohar randomly swap 2nd and 3rd place daily
   let eod1 = getDeterministicRandom(`eod-1-${dateStr}`, 0, 5);
   let eod2 = getDeterministicRandom(`eod-2-${dateStr}`, 0, 5);
   let eod3 = getDeterministicRandom(`eod-3-${dateStr}`, 0, 5);
@@ -55,9 +55,12 @@ export function getScheduleForDate(dateStr) {
   }
 
   const sortedEodMins = [eod1, eod2, eod3].sort((a, b) => a - b);
-  const aarshaEodMin = sortedEodMins[0];
-  const shrinivasEodMin = sortedEodMins[1];
-  const manoharEodMin = sortedEodMins[2];
+  const aarshaEodMin = sortedEodMins[0]; // Aarsha is always 1st
+
+  // Randomize 2nd vs 3rd order between Shrinivas and Manohar
+  const isShrinivasSecond = getDeterministicRandom(`eod-order-${dateStr}`, 0, 1) === 0;
+  const shrinivasEodMin = isShrinivasSecond ? sortedEodMins[1] : sortedEodMins[2];
+  const manoharEodMin = isShrinivasSecond ? sortedEodMins[2] : sortedEodMins[1];
 
   return {
     manohar: {
