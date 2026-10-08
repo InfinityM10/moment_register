@@ -41,16 +41,16 @@ export function getScheduleForDate(dateStr) {
   // Aarsha Lunch In (2:00 PM - 2:30 PM)
   const aarshaLunchInMin = getDeterministicRandom(`aarsha-lunch-in-${dateStr}`, 0, 30);
 
-  // EOD Punch Out (5:02 PM - 5:09 PM)
+  // EOD Punch Out (5:00 PM - 5:05 PM)
   // Aarsha first, then Shrinivas, then Manohar
-  let eod1 = getDeterministicRandom(`eod-1-${dateStr}`, 2, 9);
-  let eod2 = getDeterministicRandom(`eod-2-${dateStr}`, 2, 9);
-  let eod3 = getDeterministicRandom(`eod-3-${dateStr}`, 2, 9);
+  let eod1 = getDeterministicRandom(`eod-1-${dateStr}`, 0, 5);
+  let eod2 = getDeterministicRandom(`eod-2-${dateStr}`, 0, 5);
+  let eod3 = getDeterministicRandom(`eod-3-${dateStr}`, 0, 5);
 
   let attempts = 0;
   while ((eod1 === eod2 || eod1 === eod3 || eod2 === eod3) && attempts < 50) {
-    if (eod1 === eod2) eod2 = ((eod2 - 2 + 1) % 8) + 2;
-    if (eod1 === eod3 || eod2 === eod3) eod3 = ((eod3 - 2 + 2) % 8) + 2;
+    if (eod1 === eod2) eod2 = (eod2 + 1) % 6;
+    if (eod1 === eod3 || eod2 === eod3) eod3 = (eod3 + 2) % 6;
     attempts++;
   }
 
