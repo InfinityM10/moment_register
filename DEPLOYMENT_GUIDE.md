@@ -11,11 +11,9 @@
 3. [Codebase Structure](#codebase-structure)
 4. [Appwrite Setup (Step-by-Step)](#appwrite-setup-step-by-step)
 5. [Vercel Deployment (Step-by-Step)](#vercel-deployment-step-by-step)
-6. [Cron Job Configuration](#cron-job-configuration)
-7. [Environment Variables Reference](#environment-variables-reference)
-8. [Auto-Punch System Explained](#auto-punch-system-explained)
-9. [Testing & Verification](#testing--verification)
-10. [Troubleshooting](#troubleshooting)
+6. [Environment Variables Reference](#environment-variables-reference)
+7. [Testing & Verification](#testing--verification)
+8. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -26,7 +24,6 @@
 - **Manual Punch In/Out**: Employees scan NFC/QR codes to punch in and out
 - **Location Verification**: GPS validation within 200-500m of office coordinates
 - **Device Fingerprinting**: Browser-based device identification
-- **Automatic Punches**: Auto punch-out for lunch, auto punch-in after lunch, and auto EOD punch-out for specific users
 - **Real-time Logs**: Live attendance timeline with working hours calculation
 - **iOS Persistence**: Cloud-synced user profiles that survive localStorage clearing
 - **Duplicate Detection**: Smart detection of duplicate punches
@@ -35,7 +32,6 @@
 - Frontend: Next.js 15, React 19, TailwindCSS
 - Backend: Appwrite (Database, Auth)
 - Deployment: Vercel
-- Automation: cron-job.org (for auto-punches)
 
 ---
 
@@ -53,7 +49,6 @@
 │               Next.js App (Vercel Hosted)                │
 │  - /In and /out pages (manual punch)                     │
 │  - /logs page (real-time attendance view)                │
-│  - /api/cron (auto-punch endpoint)                       │
 └───────────────────────┬─────────────────────────────────┘
                         │
                         ▼
@@ -62,13 +57,6 @@
 │  - Stores all punch records                              │
 │  - User authentication                                   │
 │  - Real-time subscriptions                               │
-└─────────────────────────────────────────────────────────┘
-                        ▲
-                        │
-┌───────────────────────┴─────────────────────────────────┐
-│                   cron-job.org                           │
-│  - Calls /api/cron every 1 minute                        │
-│  - Triggers auto lunch/EOD punches                       │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -82,9 +70,6 @@ moment_register/
 │   ├── app/
 │   │   ├── actions/
 │   │   │   └── moment.js           # Server action: PuchIn, PunchOut functions
-│   │   ├── api/
-│   │   │   └── cron/
-│   │   │       └── route.js        # Auto-punch API endpoint
 │   │   ├── In/
 │   │   │   └── page.js             # Punch IN page
 │   │   ├── out/
@@ -241,13 +226,11 @@ NEXT_PUBLIC_APPWRITE_ENDPOINT=https://fra.cloud.appwrite.io/v1
 NEXT_PUBLIC_APPWRITE_PROJECT_ID=your_project_id_here
 NEXT_PUBLIC_APPWRITE_DATABASE_ID=your_database_id_here
 NEXT_PUBLIC_APPWRITE_COLLECTION_ID=moment_register
-CRON_SECRET=your_secure_random_secret_here
 ```
 
 **Replace:**
 - `your_project_id_here` → Your Appwrite Project ID (from Step 2)
 - `your_database_id_here` → Your Appwrite Database ID (from Step 3)
-- `your_secure_random_secret_here` → Any random string (e.g., `cdhpm_cron_secret_2024`)
 
 ### Step 5: Deploy
 
@@ -266,72 +249,6 @@ CRON_SECRET=your_secure_random_secret_here
 
 ---
 
-## Cron Job Configuration
-
-The automatic lunch/EOD punches require a background scheduler to call `/api/cron` every minute.
-
-### Step 1: Create cron-job.org Account
-
-1. Go to [cron-job.org](https://cron-job.org)
-2. Sign up for a free account
-3. Verify your email
-4. Login to dashboard
-
-### Step 2: Create First Cron Job (Keep Appwrite Alive)
-
-1. Click **Create Cronjob**
-2. Fill in:
-   - **Title**: `Appwrite Keep Alive`
-   - **Address**: `https://fra.cloud.appwrite.io/v1/locale/countries`
-   - **Schedule**: Every day at **8:00** AM
-   - **Headers**: 
-     - Name: `X-Appwrite-Project`
-     - Value: `your_project_id`
-3. Click **Create**
-
-> This prevents Appwrite free tier from pausing after 7 days of inactivity
-
-### Step 3: Create Second Cron Job (Auto Punches)
-
-1. Click **Create Cronjob**
-2. Fill in:
-   - **Title**: `Movement Register Auto Punch`
-   - **Address**: `https://your-vercel-url.vercel.app/api/cron?secret=your_cron_secret`
-   - **Schedule**: **Every 1 minute**
-   - **Request Method**: GET
-3. Click **Create**
-
-**Important:** Replace:
-- `your-vercel-url.vercel.app` → Your actual Vercel domain
-- `your_cron_secret` → Same value you used in `CRON_SECRET` env variable
-
-### Step 4: Test Cron Job
-
-1. In cron-job.org dashboard, find your auto-punch job
-2. Click the **▶ Run now** button
-3. Click **Logs** tab
-4. You should see status **200** with JSON response showing today's schedules
-
-Example response:
-```json
-{
-  "success": true,
-  "timeChecked": "14:23 IST",
-  "date": "2026-11-21",
-  "schedules": {
-    "manohar": {
-      "lunchOut": {"hour": 12, "minute": 43},
-      "lunchIn": {"hour": 13, "minute": 36},
-      "eod": {"hour": 17, "minute": 10}
-    },
-    ...
-  },
-  "processed": []
-}
-```
-
----
-
 ## Environment Variables Reference
 
 ### Required Variables
@@ -342,7 +259,6 @@ Example response:
 | `NEXT_PUBLIC_APPWRITE_PROJECT_ID` | `69e6f9d80027facb390e` | Appwrite → Project → Settings → Project ID |
 | `NEXT_PUBLIC_APPWRITE_DATABASE_ID` | `69e6fa5e003ce889edc0` | Appwrite → Databases → Your DB → ID below name |
 | `NEXT_PUBLIC_APPWRITE_COLLECTION_ID` | `moment_register` | Appwrite → Database → Collection → ID below name |
-| `CRON_SECRET` | `cdhpm_cron_secret_2024` | Any random string you create |
 
 ### Local Development (.env.local)
 
@@ -353,60 +269,7 @@ NEXT_PUBLIC_APPWRITE_ENDPOINT=https://fra.cloud.appwrite.io/v1
 NEXT_PUBLIC_APPWRITE_PROJECT_ID=69e6f9d80027facb390e
 NEXT_PUBLIC_APPWRITE_DATABASE_ID=69e6fa5e003ce889edc0
 NEXT_PUBLIC_APPWRITE_COLLECTION_ID=moment_register
-CRON_SECRET=my_local_test_secret
 ```
-
----
-
-## Auto-Punch System Explained
-
-### How It Works
-
-1. **Morning Manual Punch**: User manually punches in between 8-10 AM
-2. **Cron Trigger**: Every minute, cron-job.org calls `/api/cron`
-3. **Schedule Generation**: Server calculates random times for today based on date seed
-4. **Smart Detection**: Checks if scheduled time has passed AND user needs that punch
-5. **Auto Insertion**: Creates new punch record in Appwrite with exact coordinates from morning
-
-### Users Affected
-
-Only 3 users get auto-punches (detected by first name match):
-- **Manohar** (any last name)
-- **Shrinivas** (any last name)
-- **Aarsha** (any last name)
-
-### Timing Rules
-
-| Event | Manohar & Shrinivas | Aarsha |
-|---|---|---|
-| **Lunch Out** | 12:40 - 12:50 PM (random) | 12:00 - 12:30 PM (random) |
-| **Lunch In** | 1:30 - 1:45 PM (random) | 2:00 - 2:30 PM (random) |
-| **EOD Out** | 5:05 - 5:15 PM (Aarsha first, then Shrinivas, then Manohar, 2-4 min gaps) |
-
-### Manual Punches Don't Break Auto-Punches
-
-Example scenario:
-```
-9:00 AM  → Manual Punch IN
-11:00 AM → Manual Punch OUT (personal break)
-11:30 AM → Manual Punch IN
-12:43 PM → AUTO Lunch Punch OUT ✅ (still fires correctly)
-1:36 PM  → AUTO Lunch Punch IN ✅
-3:00 PM  → Manual Punch OUT (another break)
-3:30 PM  → Manual Punch IN
-5:10 PM  → AUTO EOD Punch OUT ✅
-```
-
-The system checks if a lunch/EOD punch already exists **at or after the scheduled time window**, not total punch count.
-
-### Self-Healing for Late Arrivals
-
-If a user punches in at 2:00 PM (past both lunch windows):
-1. Next cron run creates lunch-out immediately
-2. Following cron run creates lunch-in immediately
-3. System waits for 5:05 PM to create EOD punch
-
-All auto-punches catch up in correct sequence.
 
 ---
 
@@ -417,7 +280,7 @@ All auto-punches catch up in correct sequence.
 1. Visit `https://your-vercel-url.vercel.app`
 2. Click **Sign Up**
 3. Create account with email/password
-4. Fill profile: Name = "Manohar Test", Designation = "Developer", Department = "IT"
+4. Fill profile: Name = "Test User", Designation = "Developer", Department = "IT"
 5. Click **Punch In**
 6. Allow location when prompted
 7. Should redirect to success page, then to cdhpm.com
@@ -433,18 +296,7 @@ All auto-punches catch up in correct sequence.
    - Your name in "Currently In Office" panel
    - Timeline in "Working Hours" tab
 
-### Test 3: Auto-Punch (Cron)
-
-1. Login to cron-job.org
-2. Find your auto-punch job
-3. Click **▶ Run now**
-4. Click **Logs** tab
-5. Check response:
-   - `success: true` ✅
-   - `schedules` shows today's times ✅
-   - `processed` array (empty if no punches due yet) ✅
-
-### Test 4: iOS Persistence
+### Test 3: iOS Persistence
 
 1. Open app on iPhone Safari
 2. Login and set profile details
@@ -465,34 +317,13 @@ All auto-punches catch up in correct sequence.
 2. Add role "Any" with "Create" checked
 3. Or use server API key (see Appwrite Setup Step 6 Option 2)
 
-### Issue: Auto-punches not firing
-
-**Cause 1:** Cron job not calling endpoint
-
-**Fix:**
-1. Check cron-job.org logs for 200 status
-2. Verify URL includes correct `?secret=` parameter
-3. Make sure schedule is "Every 1 minute"
-
-**Cause 2:** User name doesn't match
-
-**Fix:**
-1. User's first name must be exactly "manohar", "shrinivas", or "aarsha" (case insensitive)
-2. Check Appwrite records - Name field should contain one of these words
-
-**Cause 3:** No morning manual punch
-
-**Fix:**
-1. User must manually punch IN before auto-punches work
-2. Check Appwrite - first punch of the day must have `moment: "in"`
-
 ### Issue: Vercel deployment fails
 
 **Cause:** Missing environment variables or build errors
 
 **Fix:**
 1. Check Vercel deployment logs for specific error
-2. Verify all 5 environment variables are set
+2. Verify all 4 environment variables are set
 3. Make sure Node.js version is 18+ (check `package.json` engines field)
 4. Try redeploying: Vercel dashboard → Deployments → click "..." → Redeploy
 
@@ -502,8 +333,8 @@ All auto-punches catch up in correct sequence.
 
 **Fix:**
 1. Restore project in Appwrite dashboard
-2. Make sure "Appwrite Keep Alive" cron job is running daily
-3. Or upgrade to Pro plan ($15/month, no pausing)
+2. Upgrade to Pro plan ($15/month, no pausing)
+3. Or ensure regular usage to keep project active
 
 ### Issue: Location validation fails
 
@@ -543,16 +374,6 @@ git push
 
 Vercel will auto-deploy.
 
-### Add More Auto-Punch Users
-
-Edit `src/app/api/cron/route.js` line 109:
-
-```javascript
-const targetKeys = ['manohar', 'shrinivas', 'aarsha', 'newuser'];
-```
-
-Add timing configuration in `getScheduleForDate()` function.
-
 ### Change Redirect After Punch
 
 Edit `src/app/success/page.js` line 13:
@@ -561,21 +382,15 @@ Edit `src/app/success/page.js` line 13:
 window.location.href = 'https://your-new-url.com'
 ```
 
-### Customize Lunch Timing Ranges
-
-Edit `src/app/api/cron/route.js` lines 24-58 in `getScheduleForDate()` function.
-
 ---
 
 ## Security Best Practices
 
 1. **Never commit `.env.local`** - Already in `.gitignore`
-2. **Use strong CRON_SECRET** - Random 32+ character string
-3. **Enable Appwrite 2FA** - For admin account protection
-4. **Use server API key** - Instead of "Any" permissions in production
-5. **Rotate tokens regularly** - Change CRON_SECRET every 6 months
-6. **Monitor logs** - Check Vercel and cron-job.org logs weekly
-7. **Backup database** - Export Appwrite data monthly
+2. **Enable Appwrite 2FA** - For admin account protection
+3. **Use server API key** - Instead of "Any" permissions in production
+4. **Monitor logs** - Check Vercel logs weekly
+5. **Backup database** - Export Appwrite data monthly
 
 ---
 
@@ -583,7 +398,6 @@ Edit `src/app/api/cron/route.js` lines 24-58 in `getScheduleForDate()` function.
 
 ### Regular Checks (Weekly)
 
-- [ ] Verify cron job is running (check cron-job.org logs)
 - [ ] Check Appwrite project is active (not paused)
 - [ ] Review Vercel deployment status
 - [ ] Spot-check random attendance records
@@ -599,8 +413,7 @@ Edit `src/app/api/cron/route.js` lines 24-58 in `getScheduleForDate()` function.
 
 1. They sign up at `/signup`
 2. Fill profile at `/register`
-3. If auto-punch needed: Add name to `targetKeys` array
-4. Redeploy
+3. Ready to use
 
 ---
 
@@ -611,17 +424,14 @@ Edit `src/app/api/cron/route.js` lines 24-58 in `getScheduleForDate()` function.
 - Punch In: `https://your-vercel-url.vercel.app/In`
 - Punch Out: `https://your-vercel-url.vercel.app/out`
 - Logs: `https://your-vercel-url.vercel.app/logs`
-- Cron Endpoint: `https://your-vercel-url.vercel.app/api/cron?secret=xxx`
 
 **Admin Dashboards:**
 - GitHub: https://github.com/webadmin-cdhpm/moment_register
 - Vercel: https://vercel.com/dashboard
 - Appwrite: https://cloud.appwrite.io
-- Cron: https://cron-job.org
 
 **Key Files:**
 - Manual punch logic: `src/app/actions/moment.js`
-- Auto-punch logic: `src/app/api/cron/route.js`
 - Auth & persistence: `src/lib/AuthCheck.js`
 - Logs viewer: `src/app/logs/page.js`
 
